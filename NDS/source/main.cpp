@@ -14,22 +14,24 @@ enum {
 	cpu_colour = 31
 };
 FILE* f;
-waveInfo w;
+WaveInfo w;
 mm_word on_stream_request( mm_word length, mm_addr dest, mm_stream_formats format ) {
 //----------------------------------------------------------------------------------
+  BG_PALETTE_SUB[0] = 31 << 5;
   s16* d = (s16*)dest;	
   int req = 0;
   while (req < length)
   {
-    if (feof(f))
-    {
-			mmStreamClose();
-			fclose(f);
-      printf("Finished song!\n");
-      return req; 
-    }
     *d++ = (s16)getADCM(f,&w);
     req++;
+  }
+  BG_PALETTE_SUB[0] = 31;
+  if (feof(f))
+  {
+	  mmStreamClose();
+		fclose(f);
+    printf("Finished song!\n");
+    return req; 
   }
 	return length;
 }

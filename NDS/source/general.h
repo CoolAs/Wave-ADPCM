@@ -1,10 +1,17 @@
+#pragma once
 #include <nds.h>
 #include <stdio.h>
+#define WAV_BUFFER_SIZE 4096
 typedef struct
 {
-  int sampleRate;
-  int blockAlign;
-}waveInfo;
-
-int parseWave(FILE* f,waveInfo* w);
-s16 getADCM(FILE* f,waveInfo* w);
+	int sampleRate;
+	int blockAlign;
+	int dataSize;
+  char* buffer;
+} WaveInfo;
+extern "C"
+{
+int parseWave(FILE* f, WaveInfo* w);
+s16 getADCM(FILE* f, WaveInfo* w);
+char getCharacter(FILE* f, WaveInfo* w);
+}

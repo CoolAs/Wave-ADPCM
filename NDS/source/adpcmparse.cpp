@@ -21,11 +21,21 @@ int ima_index_table[16] = {
 }; 
 bool get;
 char n;
-int getNibble(FILE* f)
+int bptr = 0;
+char getCharacter(FILE* f, WaveInfo* w)
+{
+  if (bptr >=WAV_BUFFER_SIZE)
+  {
+    fread(w->buffer,1,WAV_BUFFER_SIZE,f);
+    bptr = 0;
+  }
+  return w->buffer[bptr++];
+}
+int getNibble(FILE* f,WaveInfo* w)
 {
   if (get)
   {
-    n = fgetc(f);
+    n = getCharacter(f,w);
     get = false;
     return n & 0x0f;
 
@@ -40,33 +50,24 @@ int predictor = 0;
 int step_index = 0;
 int step = 0;
 int reset = 0;
-s16 getADCM(FILE* f,waveInfo* w)
+
+s16 getADCM(FILE* f,WaveInfo* w)
 {
-  int nibble = 0;
   if (reset == 0 )
   {
-    reset = w->blockAlign*2;
-    fgetc(f);
-    fgetc(f);
+    reset = w->blockAlign*2 - 8;
     predictor = 0;
-    step_index = fgetc(f);
-    step = 0;     
-    fgetc(f);
-    putchar(predictor&0xff);
-    putchar((predictor&0xFF00)>>8);
-    reset-=8;
+    getCharacter(f,w);
+    getCharacter(f,w);
+    step_index = getCharacter(f,w);
+    step = 0;
+    getCharacter(f,w);
   }
   else 
   {
-    nibble = getNibble(f);
+    int nibble = getNibble(f,w);
     step = ima_step_table[step_index];
-    int diff = step >> 3;    
-  	if(nibble&4)
-  		diff += step;
-  	if(nibble&2)
-  		diff += step>>1;
-  	if(nibble&1)
-  		diff += step>>2;
+    int diff = (step >> 3) + ((nibble&7) * (step>>2));
     if (nibble&8) predictor -= diff;
     else predictor += diff ;
     if (predictor > 32767) predictor = 32767;
